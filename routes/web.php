@@ -17,8 +17,19 @@ use Illuminate\Support\Facades\Route;
 
 Auth::routes();
 
-Route::get('/', [StudentController::class, 'index'])->name('home');
-Route::get('/home', [StudentController::class, 'index']);
+Route::get('/', function () {
+    // Already logged-in student → go to their dashboard
+    if (Illuminate\Support\Facades\Auth::guard('student')->check()) {
+        return redirect('/home');
+    }
+    // Already logged-in administrator → go to admin dashboard
+    if (Illuminate\Support\Facades\Auth::guard('users')->check()) {
+        return redirect('/admin');
+    }
+    return view('landing');
+})->name('landing');
+
+Route::get('/home', [StudentController::class, 'index'])->name('home');
 
 Route::get('/logout', [LoginController::class, 'logout'])->name('student.logout');
 Route::get('/student/update-profile', [StudentController::class, 'update_profile'])->name('update.profile');
