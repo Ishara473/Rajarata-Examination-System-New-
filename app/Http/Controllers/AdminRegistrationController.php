@@ -20,6 +20,7 @@ use App\Specialization;
 use App\SemesterRegistrationSubject;
 
 use App\CourseSubject;
+use App\SystemLog;
 
 // use App\Batch;
 use App\Regulation;
@@ -82,6 +83,50 @@ class AdminRegistrationController extends Controller
             $data['draw']=$request->draw;
             return response()->json($data);
         }
+    }
+
+    public function mark_dropout(Request $request)
+    {
+        if (!(Auth::user()->hasPermissionTo('registration:upload') || Auth::user()->hasRole('Admin') )){
+            abort(403, 'Unauthorized action.');
+        }
+
+        $studentIds = array_filter(array_map('intval', (array) $request->input('student_ids', [])));
+        if (empty($studentIds)) {
+            return response()->json(['success' => false, 'message' => 'No students selected.']);
+        }
+
+        $students = Student::whereIn('id', $studentIds)->get();
+        $updatedCount = 0;
+        $skippedCount = 0;
+
+        foreach ($students as $student) {
+            $academicDetail = $student->AcademicDetail()->first();
+            if (empty($academicDetail) || (int) $academicDetail->status === -1 || (int) $academicDetail->status === 2) {
+                $skippedCount++;
+                continue;
+            }
+
+            $academicDetail->status = -1;
+            $academicDetail->save();
+            $updatedCount++;
+        }
+
+        if ($updatedCount > 0) {
+            SystemLog::create([
+                'ip' => $request->ip(),
+                'user_id' => Auth::id(),
+                'module' => 'Registration',
+                'description' => 'Marked '. $updatedCount .' student(s) as dropped out. Student IDs: '.implode(', ', $studentIds),
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'updated' => $updatedCount,
+            'skipped' => $skippedCount,
+            'message' => 'Drop-out status updated successfully.'
+        ]);
     }
 
     public function view_upload_year_registration(Request $request){

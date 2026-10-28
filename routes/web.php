@@ -49,7 +49,9 @@ Route::get('/admin', [AdminController::class, 'index'])->name('admin.dashboard')
 
 Route::get('/admin/student', [AdminStudentController::class, 'index']);
 Route::get('/admin/student/list', [AdminStudentController::class, 'listing'])->name('admin.student.list');
+// Route removed: duplicate drop-out handler (use registration list handler instead)
 Route::get('/admin/student/view/{id}', [AdminStudentController::class, 'view'])->name('admin.student.view');
+Route::get('/admin/student/{id}/studentship-letter', [AdminStudentController::class, 'generate_studentship_letter'])->name('admin.student.studentship-letter');
 Route::get('/admin/student/profile-pic', [AdminStudentController::class, 'view_profile_images']);
 Route::post('/admin/student/update-personal-details', [AdminStudentController::class, 'update_personal_details'])->name('admin.student.update-personal-details');
 Route::post('/admin/student/update-al-details', [AdminStudentController::class, 'update_al_details']);
@@ -134,6 +136,11 @@ Route::get('/admin/account', [AdminController::class, 'view_account']);
 Route::post('/admin/account', [AdminController::class, 'update_account']);
 
 Route::get('/admin/registration/view-year-registration', [AdminRegistrationController::class, 'view_year_registration']);
+Route::post('/admin/registration/mark-dropout', [AdminRegistrationController::class, 'mark_dropout']);
+
+// Issued letters UI
+Route::get('/admin/letters/issued', [AdminStudentController::class, 'issued_letters_view'])->name('admin.letters.issued');
+Route::get('/admin/letters/issued-list', [AdminStudentController::class, 'issued_letters_list']);
 
 Route::get('/admin/registration/upload-year-registration', [AdminRegistrationController::class, 'view_upload_year_registration']);
 Route::post('/admin/registration/upload-year-registration', [AdminRegistrationController::class, 'upload_year_registration']);

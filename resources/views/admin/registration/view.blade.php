@@ -51,11 +51,14 @@ Yearly Registration
 </div>
 <div class="card mb-2">
     <div class="card-body mt-1">
-    <table id="grid" class="table table-striped compact table-bordered dataTable"></table>
-  </div>
-</div> 
-@endsection
+      <div class="mb-3">
+        <button class="btn btn-danger btn-grey-overlay btn-icon-split" id="btnMarkDropout" type="button"><span class="icon"><i class="fa fa-user-times"></i></span> <span class="text">Mark as Drop-out</span></button>
+      </div>
+      <table id="grid" class="table table-striped compact table-bordered dataTable"></table>
+    </div>
+</div>
 
+@endsection
 
 @section('custom-js')
 <script src="{{ asset('plugins/datepicker/bootstrap-datepicker.min.js') }}"></script>
@@ -85,8 +88,18 @@ $(document).ready(function() {
                     d.type = 'json';
                 },
 		},
-    "order": [[ 2, "asc" ]],
+    "order": [[ 3, "asc" ]],
 		"columns": [
+        {
+          "data": null,
+          "orderable": false,
+          "className": 'text-center',
+          "render": function (data, type, full, meta) {
+              return '<input type="checkbox" class="registration-select" value="' + full.ID + '">';
+          },
+          "title": "",
+          "width": "3rem"
+        },
 				{ "data": "ID",	"visible":false, "name":"ID" },
 				{ "data": "RegistrationNo", "name": "RegistrationNo", "title": "Registration No", "width": "150px",},
 				{ "data": "Name", "name":"Name", "title": "Name with Initials" },
@@ -99,6 +112,41 @@ $(document).ready(function() {
 				
 		]
 	});
+
+    $('#btnMarkDropout').on('click', function(e){
+        e.preventDefault();
+        var studentIds = [];
+        $('.registration-select:checked').each(function(){
+            studentIds.push($(this).val());
+        });
+
+        if(studentIds.length === 0){
+            alert('Please select at least one student.');
+            return;
+        }
+
+        if(!confirm('Are you sure you want to mark the selected registration records as drop-outs?')){
+            return;
+        }
+
+        $.ajax({
+            url: '/admin/registration/mark-dropout',
+            type: 'POST',
+            data: {student_ids: studentIds},
+            headers: {'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')},
+            success: function(response){
+                if(response.success){
+                    alert(response.message);
+                    table.ajax.reload();
+                }else{
+                    alert(response.message || 'Unable to update selected students.');
+                }
+            },
+            error: function(){
+                alert('Unable to update selected students right now.');
+            }
+        });
+    });
 
     $('.yearpicker').datepicker({
         format:'yyyy',

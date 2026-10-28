@@ -68,6 +68,11 @@ Students
                                 Specialization :<em class="text-danger">@if($student->AcademicDetail->specialization_id > 0) {{$student->AcademicDetail->Specialization->name}}  @else - @endif</em>
                             </div>
                         </div>
+                        <div class="row mt-2">
+                            <div class="col-md-12 text-right">
+                                <a class="btn btn-secondary" href="{{ url('/admin/student/'.$student->id.'/studentship-letter') }}">Generate Studentship Letter</a>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

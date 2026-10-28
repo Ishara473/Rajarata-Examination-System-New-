@@ -70,4 +70,8 @@ class StudentAccDetail extends Model
         $status = [1=>'Enrolled',2=>'Graduated',-1=>'Dropped'];
         return $status[$this->status];
     }
+
+    public function isActive(){
+        return (int) $this->status !== -1;
+    }
 }

@@ -38,6 +38,10 @@ class StudentExamController extends Controller
         $student = Auth::user();
         $accDetails = $student->AcademicDetail()->first(); 
 
+        if(empty($accDetails) || !$accDetails->isActive()){
+            abort(403, 'Unauthorized action.');
+        }
+
         $studyYear = $accDetails->current_study_year;
 
         $codes = [];
@@ -79,6 +83,10 @@ class StudentExamController extends Controller
         $semester  = $request->semester;
         $student = Auth::user();
         $accDetails = $student->AcademicDetail()->first(); 
+
+        if(empty($accDetails) || !$accDetails->isActive()){
+            abort(403, 'Unauthorized action.');
+        }
         
         $studentID = $student->id;
         $studyYear = $accDetails->current_study_year;
@@ -225,6 +233,9 @@ class StudentExamController extends Controller
         $accYear =  $this->year;
 
         $accDetails = $student->AcademicDetail()->first(); 
+        if(empty($accDetails) || !$accDetails->isActive()){
+            abort(403, 'Unauthorized action.');
+        }
         $studyYear = $accDetails->current_study_year;
 
         $semester = $request->semester;
@@ -268,6 +279,10 @@ class StudentExamController extends Controller
     public function view_approved_exam_subjects(Request $request){
         if(settings('exam_app_download')!=1) abort(403, 'Unauthorized action.');
         $student = Auth::user();
+        $accDetails = $student->AcademicDetail()->first(); 
+        if(empty($accDetails) || !$accDetails->isActive()){
+            abort(403, 'Unauthorized action.');
+        }
         $application = StudentExam::where('year', '=', $this->year)->where('semester', '=', $request->semester)->where('student_id', '=', $student->id)->first();
 
         if(empty($application))abort(404, 'Application Not Found.');

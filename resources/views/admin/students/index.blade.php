@@ -59,8 +59,7 @@ Students
 </div>
 <div class="card mb-2">
   <div class="card-body mt-1">
-    <table id="grid" class="table table-striped compact table-bordered dataTable">
-    </table>
+    <table id="grid" class="table table-striped compact table-bordered dataTable"></table>
   </div>
 </div> 
 @endsection
@@ -119,6 +118,7 @@ $(document).ready(function() {
 				
 		]
 	});
+
 
 });
 

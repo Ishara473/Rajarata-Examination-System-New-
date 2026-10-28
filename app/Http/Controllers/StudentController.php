@@ -32,6 +32,11 @@ class StudentController extends Controller
     public function index()
     {
         $user = Auth::user();
+        $accDetails = $user->AcademicDetail()->first();
+        if(empty($accDetails) || !$accDetails->isActive()){
+            abort(403, 'Unauthorized action.');
+        }
+
         if($user->is_profile_confirmed==0) return redirect(url('/student/update-profile'));
         else return view('student.index',['user'=>$user]);
     }
@@ -39,6 +44,11 @@ class StudentController extends Controller
     public function update_profile()
     {
         $user = Auth::user();
+        $accDetails = $user->AcademicDetail()->first();
+        if(empty($accDetails) || !$accDetails->isActive()){
+            abort(403, 'Unauthorized action.');
+        }
+
         $alSubjects = Arr::pluck(ALSubject::orderBy('subject')->select('id','subject')->get()->toArray(), 'subject', 'id');
         $alSubjects[-1] ='';
         return view('student.update-profile',['student'=>$user,'alSubjects'=>$alSubjects]);
@@ -63,6 +73,10 @@ class StudentController extends Controller
     public function save_profile_updates(Request $request)
     {
         $user = Auth::user();
+        $accDetails = $user->AcademicDetail()->first();
+        if(empty($accDetails) || !$accDetails->isActive()){
+            abort(403, 'Unauthorized action.');
+        }
 
 
         // print_r($request->all());
@@ -142,11 +156,20 @@ class StudentController extends Controller
     
     public function update_password(){
         $user = Auth::user();
+        $accDetails = $user->AcademicDetail()->first();
+        if(empty($accDetails) || !$accDetails->isActive()){
+            abort(403, 'Unauthorized action.');
+        }
         return view('student.change-password');
     }
 
     public function save_updated_password(Request $request){
         $user = Auth::user();
+        $accDetails = $user->AcademicDetail()->first();
+        if(empty($accDetails) || !$accDetails->isActive()){
+            abort(403, 'Unauthorized action.');
+        }
+
         $student = Student::where('id','=',$user->id)->first();
 
 

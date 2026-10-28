@@ -48,7 +48,10 @@ class LoginController extends Controller
                 ->withErrors($validator)
                 ->withInput();
         }else{
-            if(Auth::guard('student')->attempt(['registration_no'=>$request->registration,'password'=>$request->password,'status'=>1],false)){
+            $student = \App\Student::where('registration_no', $request->registration)->first();
+            $academicDetail = $student && $student->AcademicDetail()->first() ? $student->AcademicDetail()->first() : null;
+
+            if($student && $academicDetail && $academicDetail->isActive() && Auth::guard('student')->attempt(['registration_no'=>$request->registration,'password'=>$request->password,'status'=>1],false)){
                 return redirect('/');
             }else{
                 return redirect()->back()->withInput($request->only('registration_no'))->withErrors(['account'=>'Registration number and password did not match.']);

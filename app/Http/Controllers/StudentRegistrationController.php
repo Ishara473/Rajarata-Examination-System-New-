@@ -47,6 +47,10 @@ class StudentRegistrationController extends Controller
     public function annual_registration(Request $request)
     {
         $student = Auth::user();
+        $accDetails = $student->AcademicDetail()->first();
+        if(empty($accDetails) || !$accDetails->isActive()){
+            abort(403, 'Unauthorized action.');
+        }
         return view('student.annual-registration',['student'=>$student]);
     }
 
@@ -54,6 +58,9 @@ class StudentRegistrationController extends Controller
     {
         $student = Auth::user();
         $accDetails = $student->AcademicDetail()->first(); 
+        if(empty($accDetails) || !$accDetails->isActive()){
+            abort(403, 'Unauthorized action.');
+        }
 
         $studyYear =$accDetails->current_study_year;
         $stdMaxSem = $studyYear*2;
@@ -132,6 +139,9 @@ class StudentRegistrationController extends Controller
     public function save_semester_registration(Request $request){
         $student = Auth::user();
         $accDetails = $student->AcademicDetail()->first(); 
+        if(empty($accDetails) || !$accDetails->isActive()){
+            abort(403, 'Unauthorized action.');
+        }
 
         $studyYear =$accDetails->current_study_year;
         $stdMaxSem = $studyYear*2;
@@ -236,6 +246,9 @@ class StudentRegistrationController extends Controller
 
         $student = Auth::user();
         $accDetails = $student->AcademicDetail()->first(); 
+        if(empty($accDetails) || !$accDetails->isActive()){
+            abort(403, 'Unauthorized action.');
+        }
 
         if(settings('sp_selection_enable')==1 && $accDetails->current_study_year >= $sp_selection_year && $accDetails->specialization_id == 0 ){
             $tempSpecialization = DB::table('master_course_specialization_categories')->select('id','department','name')->get();
@@ -253,6 +266,10 @@ class StudentRegistrationController extends Controller
 
     public function save_specialization_selection(Request $request){
         $student = Auth::user();
+        $accDetails = $student->AcademicDetail()->first();
+        if(empty($accDetails) || !$accDetails->isActive()){
+            abort(403, 'Unauthorized action.');
+        }
         
         $appoved_specialization = SpecializationRequest::where('student_id','=',$student->id)->where('status','=','1')->get();
         $newSpecialization = $request->specialization;

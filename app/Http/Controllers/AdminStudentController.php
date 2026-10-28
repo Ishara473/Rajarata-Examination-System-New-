@@ -26,6 +26,7 @@ use App\StudentAchievement;
 use App\YearRegistration;
 use App\StudentGaurdian;
 use App\SpecializationRequest;
+use App\SystemLog;
 
 
 use App\Scholarship;
@@ -47,6 +48,8 @@ use App\Imports\ScholarshipImport;
 
 
 use App\Exports\StudentExport;
+use PDF;
+use App\IssuedLetter;
 
 
 class AdminStudentController extends Controller{
@@ -173,6 +176,95 @@ class AdminStudentController extends Controller{
     public function create()
     {
         return view('students.create');
+    }
+
+    public function generate_studentship_letter(Request $request, $id)
+    {
+        if (!(Auth::user()->hasPermissionTo('student:view') || Auth::user()->hasRole('Admin') )){
+            abort(403, 'Unauthorized action.');
+        }
+
+        $student = Student::with('Contact','AcademicDetail','AcademicDetail.Specialization')->find($id);
+        if (empty($student)) abort(404, 'Student not found.');
+
+        $data = [
+            'student' => $student,
+            'date' => date('Y-m-d'),
+        ];
+
+        $pdf = PDF::loadView('admin.letters.studentship', $data)->setPaper('a4', 'portrait');
+
+        // Log issuance
+        SystemLog::create([
+            'ip' => $request->ip(),
+            'user_id' => Auth::id(),
+            'module' => 'Studentship Letter',
+            'description' => 'Generated studentship letter for student ID: '.$student->id,
+        ]);
+
+        // Record issued letter in audit table
+        $filename = 'studentship_'.$student->registration_no.'.pdf';
+        // sanitize filename to remove any slashes/backslashes (Symfony disallows these)
+        $safeFilename = preg_replace('/[\\\\\/]+/', '_', $filename);
+        $reference = 'SL-'.time().'-'.$student->id;
+        try{
+            IssuedLetter::create([
+                'student_id' => $student->id,
+                'issued_by' => Auth::id(),
+                'issued_at' => Carbon::now(),
+                'reference_no' => $reference,
+                'type' => 'studentship',
+                'filename' => $safeFilename,
+            ]);
+        }catch(\Exception $e){
+            // non-fatal: continue to return PDF even if audit write fails
+        }
+
+        return $pdf->download($safeFilename);
+    }
+
+    public function issued_letters_view(Request $request)
+    {
+        if (!(Auth::user()->hasPermissionTo('student:view') || Auth::user()->hasRole('Admin') )){
+            abort(403, 'Unauthorized action.');
+        }
+        return view('admin.letters.issued_index');
+    }
+
+    public function issued_letters_list(Request $request)
+    {
+        if (!(Auth::user()->hasPermissionTo('student:view') || Auth::user()->hasRole('Admin') )){
+            abort(403, 'Unauthorized action.');
+        }
+
+        $query = DB::table('issued_letters')
+            ->leftJoin('student_personal_details', 'issued_letters.student_id', '=', 'student_personal_details.id')
+            ->leftJoin('users', 'issued_letters.issued_by', '=', 'users.id')
+            ->select('issued_letters.id', 'issued_letters.reference_no', 'issued_letters.type', 'issued_letters.filename', 'issued_letters.issued_at', 'student_personal_details.id as student_id', 'student_personal_details.registration_no', DB::raw('CONCAT(student_personal_details.initials, " ", student_personal_details.name_marking) as student_name'), DB::raw('CONCAT(users.first_name, " ", users.last_name) as issued_by_name'));
+
+        $total = $query->count();
+
+        $records = $query->orderBy('issued_letters.issued_at', 'desc')->get();
+
+        $data = [];
+        foreach ($records as $r) {
+            $data[] = [
+                $r->id,
+                $r->reference_no,
+                $r->student_name,
+                $r->registration_no,
+                $r->type,
+                $r->issued_by_name,
+                $r->issued_at,
+                '<a class="btn btn-sm btn-secondary" href="'.url('/admin/student/'.$r->student_id.'/studentship-letter').'">Download</a>'
+            ];
+        }
+
+        return response()->json([
+            'recordsTotal' => $total,
+            'recordsFiltered' => $total,
+            'data' => $data,
+        ]);
     }
 
     /**
